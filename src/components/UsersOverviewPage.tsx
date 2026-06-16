@@ -67,27 +67,31 @@ function pickRandomAgents(seed: string, maxCount = 2): string[] {
 function pickAgentsForCell(seed: string): EnvironmentAgents {
   const cellHash = hashSeed(seed)
   if (cellHash % 10 < 8) {
-    return Object.fromEntries(
-      ENVIRONMENT_PILLS.map((environment) => [environment, []]),
-    ) as EnvironmentAgents
+    return ENVIRONMENT_PILLS.reduce<EnvironmentAgents>(
+      (acc, env) => ({ ...acc, [env]: [] }),
+      {} as EnvironmentAgents,
+    )
   }
-  return Object.fromEntries(
-    ENVIRONMENT_PILLS.map((environment) => [
-      environment,
-      hashSeed(`${seed}-${environment}-skip`) % 5 < 2
-        ? []
-        : pickRandomAgents(`${seed}-${environment}`, 3),
-    ]),
-  ) as EnvironmentAgents
+  return ENVIRONMENT_PILLS.reduce<EnvironmentAgents>(
+    (acc, env) => ({
+      ...acc,
+      [env]:
+        hashSeed(`${seed}-${env}-skip`) % 5 < 2
+          ? []
+          : pickRandomAgents(`${seed}-${env}`, 3),
+    }),
+    {} as EnvironmentAgents,
+  )
 }
 
 const USER_ROWS: UserRow[] = USERS.map(({ name, email }, userIndex) => {
-  const roleCells = Object.fromEntries(
-    ROLE_COLUMNS.map((column, columnIndex) => [
-      column,
-      pickAgentsForCell(`${userIndex}-${columnIndex}-${name}`),
-    ]),
-  ) as Record<(typeof ROLE_COLUMNS)[number], EnvironmentAgents>
+  const roleCells = ROLE_COLUMNS.reduce<Record<(typeof ROLE_COLUMNS)[number], EnvironmentAgents>>(
+    (acc, column, columnIndex) => ({
+      ...acc,
+      [column]: pickAgentsForCell(`${userIndex}-${columnIndex}-${name}`),
+    }),
+    {} as Record<(typeof ROLE_COLUMNS)[number], EnvironmentAgents>,
+  )
 
   if (name === 'Wayne Fan') {
     roleCells.Admin = {
