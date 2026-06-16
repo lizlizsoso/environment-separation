@@ -14,7 +14,7 @@ const ROLE_OPTIONS = [
 
 const AGENT_OPTIONS = ['andy', 'campfire', 'wood', 'smoke', 'fire', 'agent']
 
-const ENVIRONMENT_OPTIONS = ['Production', 'Staging', 'Test']
+const ALL_AGENTS_VALUE = '__all__'
 
 const MENU_ADVANCE_MS = 160
 
@@ -22,7 +22,6 @@ export type RoleAssignment = {
   id: string
   role: string | null
   agents: string[]
-  environments: string[]
 }
 
 type RoleAssignmentsProps = {
@@ -31,7 +30,7 @@ type RoleAssignmentsProps = {
   removeVariant: RemoveRowVariant
 }
 
-type Column = 'role' | 'agents' | 'environments'
+type Column = 'role' | 'agents'
 
 type ActiveMenu = {
   assignmentId: string
@@ -66,10 +65,7 @@ export function RoleAssignments({
   useEffect(() => () => clearAdvanceTimeout(), [])
 
   const hasIncompleteRow = assignments.some(
-    (assignment) =>
-      !assignment.role ||
-      assignment.agents.length === 0 ||
-      assignment.environments.length === 0,
+    (assignment) => !assignment.role || assignment.agents.length === 0,
   )
 
   useEffect(() => {
@@ -90,7 +86,7 @@ export function RoleAssignments({
 
   function updateAssignment(
     id: string,
-    patch: Partial<Pick<RoleAssignment, 'role' | 'agents' | 'environments'>>,
+    patch: Partial<Pick<RoleAssignment, 'role' | 'agents'>>,
   ) {
     onChange(
       assignments.map((assignment) =>
@@ -104,7 +100,6 @@ export function RoleAssignments({
     if (!assignment) return
 
     if (column === 'agents' && !assignment.role) return
-    if (column === 'environments' && assignment.agents.length === 0) return
 
     setActiveMenu({ assignmentId, column })
   }
@@ -120,17 +115,13 @@ export function RoleAssignments({
     const id = crypto.randomUUID()
     onChange([
       ...assignments,
-      { id, role: null, agents: [], environments: [] },
+      { id, role: null, agents: [] },
     ])
     setActiveMenu({ assignmentId: id, column: 'role' })
   }
 
   function isIncomplete(assignment: RoleAssignment) {
-    return (
-      !assignment.role ||
-      assignment.agents.length === 0 ||
-      assignment.environments.length === 0
-    )
+    return !assignment.role || assignment.agents.length === 0
   }
 
   function handleRoleSelect(assignmentId: string, role: string) {
@@ -152,26 +143,18 @@ export function RoleAssignments({
     const assignment = assignments.find((item) => item.id === assignmentId)
     if (!assignment) return
 
-    updateAssignment(assignmentId, { agents: [agent] })
-    const next = { ...assignment, agents: [agent] }
-
-    if (isIncomplete(next)) {
-      advanceMenu(assignmentId, 'environments')
-    } else {
+    if (agent === ALL_AGENTS_VALUE) {
+      updateAssignment(assignmentId, { agents: [ALL_AGENTS_VALUE] })
       clearAdvanceTimeout()
       setActiveMenu(null)
+      return
     }
-  }
 
-  function handleEnvironmentToggle(assignmentId: string, environment: string) {
-    const assignment = assignments.find((item) => item.id === assignmentId)
-    if (!assignment) return
-
-    const environments = assignment.environments.includes(environment)
-      ? assignment.environments.filter((item) => item !== environment)
-      : [...assignment.environments, environment]
-
-    updateAssignment(assignmentId, { environments })
+    const current = assignment.agents.filter((a) => a !== ALL_AGENTS_VALUE)
+    const next = current.includes(agent)
+      ? current.filter((a) => a !== agent)
+      : [...current, agent]
+    updateAssignment(assignmentId, { agents: next })
   }
 
   function getMenuOptions(column: Column): string[] {
@@ -180,8 +163,6 @@ export function RoleAssignments({
         return ROLE_OPTIONS
       case 'agents':
         return AGENT_OPTIONS
-      case 'environments':
-        return ENVIRONMENT_OPTIONS
     }
   }
 
@@ -191,8 +172,6 @@ export function RoleAssignments({
         return assignment.role ? [assignment.role] : []
       case 'agents':
         return assignment.agents
-      case 'environments':
-        return assignment.environments
     }
   }
 
@@ -208,16 +187,13 @@ export function RoleAssignments({
       case 'agents':
         handleAgentSelect(assignmentId, option)
         break
-      case 'environments':
-        handleEnvironmentToggle(assignmentId, option)
-        break
     }
   }
 
   const rowGridClass =
     removeVariant === 'row-control'
-      ? 'grid grid-cols-[1fr_1fr_1fr_1.75rem] gap-4'
-      : 'grid grid-cols-3 gap-4'
+      ? 'grid grid-cols-[1fr_1fr_1.75rem] gap-4'
+      : 'grid grid-cols-2 gap-4'
 
   return (
     <div ref={containerRef} className="relative space-y-0">
@@ -226,7 +202,6 @@ export function RoleAssignments({
       >
         <ColumnHeader>Roles</ColumnHeader>
         <ColumnHeader>Agents with this role</ColumnHeader>
-        <ColumnHeader>Environment</ColumnHeader>
         {removeVariant === 'row-control' && <span className="sr-only">Remove</span>}
       </div>
 
@@ -277,9 +252,11 @@ export function RoleAssignments({
           <SelectCell
             label="Agents with this role"
             value={
-              assignment.agents.length > 0
-                ? assignment.agents.join(', ')
-                : null
+              assignment.agents.includes(ALL_AGENTS_VALUE)
+                ? 'All agents'
+                : assignment.agents.length > 0
+                  ? assignment.agents.join(', ')
+                  : null
             }
             placeholder="Select agent"
             disabled={!assignment.role}
@@ -298,34 +275,7 @@ export function RoleAssignments({
                   onSelect={(option) =>
                     handleOptionSelect(assignment.id, 'agents', option)
                   }
-                />
-              )}
-          </SelectCell>
-
-          <SelectCell
-            label="Environment"
-            value={
-              assignment.environments.length > 0
-                ? assignment.environments.join(', ')
-                : null
-            }
-            placeholder="Select environment"
-            disabled={assignment.agents.length === 0}
-            isOpen={
-              activeMenu?.assignmentId === assignment.id &&
-              activeMenu.column === 'environments'
-            }
-            onOpen={() => openMenu(assignment.id, 'environments')}
-          >
-            {activeMenu?.assignmentId === assignment.id &&
-              activeMenu.column === 'environments' && (
-                <PickerMenu
-                  label="Environment"
-                  options={getMenuOptions('environments')}
-                  selected={getSelected('environments', assignment)}
-                  onSelect={(option) =>
-                    handleOptionSelect(assignment.id, 'environments', option)
-                  }
+                  showAllAgentsOption
                 />
               )}
           </SelectCell>
@@ -426,6 +376,7 @@ type PickerMenuProps = {
   selected: string[]
   onSelect: (value: string) => void
   showInfo?: boolean
+  showAllAgentsOption?: boolean
   onRemove?: () => void
 }
 
@@ -435,9 +386,11 @@ function PickerMenu({
   selected,
   onSelect,
   showInfo = false,
+  showAllAgentsOption = false,
   onRemove,
 }: PickerMenuProps) {
   const listboxId = useId()
+  const allAgentsSelected = selected.includes(ALL_AGENTS_VALUE)
 
   return (
     <div
@@ -446,9 +399,25 @@ function PickerMenu({
       aria-label={label}
       className="relative z-50 max-h-56 overflow-auto rounded-lg border border-sierra-border bg-white py-2 shadow-[0_8px_30px_rgba(0,0,0,0.12)]"
     >
+      {showAllAgentsOption && (
+        <>
+          <button
+            type="button"
+            role="option"
+            aria-selected={allAgentsSelected}
+            className="flex w-full flex-col px-4 py-2.5 text-left transition-colors duration-150 ease-out hover:bg-neutral-50"
+            onClick={() => onSelect(ALL_AGENTS_VALUE)}
+          >
+            <span className="text-[13px] font-semibold text-sierra-text">All current and future agents</span>
+            <span className="text-[12px] text-sierra-muted">Automatically includes any agents you create later</span>
+          </button>
+          <div className="my-1 border-t border-sierra-border" />
+          <p className="px-4 py-1.5 text-[12px] font-medium text-sierra-muted">Select individual agents</p>
+        </>
+      )}
       <ul>
         {options.map((option) => {
-          const isSelected = selected.includes(option)
+          const isSelected = !allAgentsSelected && selected.includes(option)
           return (
             <li key={option}>
               <button

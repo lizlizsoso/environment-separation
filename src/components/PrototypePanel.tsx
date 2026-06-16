@@ -1,23 +1,20 @@
 import { useEffect, useRef, useState } from 'react'
-import {
-  REMOVE_ROW_VARIANTS,
-  type RemoveRowVariant,
-} from '../types/prototype'
+import { PROTOTYPE_VARIANTS, type PrototypeVariant } from '../types/prototype'
 
 type PrototypePanelProps = {
-  removeVariant: RemoveRowVariant
-  onRemoveVariantChange: (variant: RemoveRowVariant) => void
+  variant: PrototypeVariant
+  onVariantChange: (variant: PrototypeVariant) => void
 }
 
 export function PrototypePanel({
-  removeVariant,
-  onRemoveVariantChange,
+  variant,
+  onVariantChange,
 }: PrototypePanelProps) {
   const containerRef = useRef<HTMLDivElement>(null)
   const [open, setOpen] = useState(false)
 
   const activeLabel =
-    REMOVE_ROW_VARIANTS.find((item) => item.value === removeVariant)?.label ??
+    PROTOTYPE_VARIANTS.find((item) => item.value === variant)?.label ??
     'Prototype variants'
 
   useEffect(() => {
@@ -39,7 +36,7 @@ export function PrototypePanel({
   return (
     <div
       ref={containerRef}
-      className="fixed bottom-4 left-4 z-[60] w-[min(100vw-2rem,320px)]"
+      className="fixed bottom-4 right-4 z-[60] w-[min(100vw-2rem,320px)]"
     >
       <button
         type="button"
@@ -58,19 +55,19 @@ export function PrototypePanel({
         <ul
           role="listbox"
           aria-label="Prototype variants"
-          className="absolute bottom-full left-0 mb-1 w-full overflow-hidden rounded-lg border border-sierra-border bg-white py-1 shadow-[0_8px_30px_rgba(0,0,0,0.12)]"
+          className="absolute bottom-full right-0 mb-1 w-full overflow-hidden rounded-lg border border-sierra-border bg-white py-1 shadow-[0_8px_30px_rgba(0,0,0,0.12)]"
         >
-          {REMOVE_ROW_VARIANTS.map((item) => (
-            <li key={item.value} role="option" aria-selected={removeVariant === item.value}>
+          {PROTOTYPE_VARIANTS.map((item) => (
+            <li key={item.value} role="option" aria-selected={variant === item.value}>
               <button
                 type="button"
                 className={`w-full px-3 py-2 text-left text-[12px] transition hover:bg-neutral-50 ${
-                  removeVariant === item.value
+                  variant === item.value
                     ? 'font-medium text-sierra-green'
                     : 'text-sierra-text'
                 }`}
                 onClick={() => {
-                  onRemoveVariantChange(item.value)
+                  onVariantChange(item.value)
                   setOpen(false)
                 }}
               >

@@ -11,6 +11,10 @@
   --color-sierra-text: #1a1a1a;
   --color-sierra-muted: #6b6b6b;
   --color-sierra-input-disabled: #f3f3f3;
+  --color-sierra-subtle-border: rgba(17, 17, 17, 0.05);
+  --color-sierra-matrix-row-hover: rgba(8, 155, 87, 0.04);
+  --color-sierra-matrix-cell-hover: rgba(8, 155, 87, 0.08);
+  --color-sierra-matrix-header: rgba(8, 155, 87, 0.05);
 }
 
 @layer base {
@@ -75,5 +79,46 @@
 
   .sierra-check-pop {
     animation: sierra-check-pop 160ms cubic-bezier(0.16, 1, 0.3, 1) both;
+  }
+
+  .sierra-matrix-table {
+    overflow: hidden;
+    border: 1px solid var(--color-sierra-subtle-border);
+    border-radius: 8px;
+  }
+
+  .sierra-matrix-table table {
+    width: 100%;
+    table-layout: fixed;
+    border-collapse: collapse;
+  }
+
+  .sierra-matrix-table col.sierra-matrix-agent-col {
+    width: 40%;
+  }
+
+  .sierra-matrix-table col.sierra-matrix-env-col {
+    width: 20%;
+  }
+
+  .sierra-matrix-table th,
+  .sierra-matrix-table td {
+    transition: background-color 120ms ease;
+  }
+
+  .sierra-matrix-table thead tr {
+    background-color: var(--color-sierra-matrix-header);
+  }
+
+  .sierra-matrix-table tbody tr {
+    border-top: 1px solid var(--color-sierra-subtle-border);
+  }
+
+  .sierra-matrix-table tbody tr:hover > td {
+    background-color: var(--color-sierra-matrix-row-hover);
+  }
+
+  .sierra-matrix-table tbody tr > td:hover {
+    background-color: var(--color-sierra-matrix-cell-hover);
   }
 }

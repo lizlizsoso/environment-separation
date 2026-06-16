@@ -18,7 +18,6 @@ export function EditUserModal({ open, onClose, removeVariant }: EditUserModalPro
       id: 'admin',
       role: 'Admin',
       agents: ['campfire'],
-      environments: ['Production', 'Staging', 'Test'],
     },
   ])
   const [savedMessage, setSavedMessage] = useState<string | null>(null)
@@ -29,7 +28,7 @@ export function EditUserModal({ open, onClose, removeVariant }: EditUserModalPro
     const summary = assignments
       .map(
         (a) =>
-          `${a.role} (${a.agents.join(', ')}) · ${a.environments.join(', ')}`,
+          `${a.role} (${a.agents.join(', ')})`,
       )
       .join('; ')
     setSavedMessage(`Saved locally: ${fullName} · ${summary}`)
